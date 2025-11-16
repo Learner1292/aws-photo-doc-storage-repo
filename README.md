@@ -36,7 +36,7 @@ Participants will learn to:
 
 Before running the demo, update these placeholders in the HTML files:
 
-1. **Cognito & IAM Configuration**:
+1. **Cognito, Amplify & IAM Configuration**:
    ```js
    // Cognito configuration
    region: "YOUR_AWS_REGION",
