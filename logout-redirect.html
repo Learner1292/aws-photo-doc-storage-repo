@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Logging Out...</title>
+</head>
+<body>
+  <h1>Logging out...</h1>
+  <script src="https://cdn.jsdelivr.net/npm/aws-amplify@4.3.39/dist/aws-amplify.min.js"></script>
+  <script>
+    const { Auth } = aws_amplify;
+    async function logout() {
+      try { await Auth.signOut({ global: true }); } catch {}
+      sessionStorage.clear();
+      localStorage.clear();
+      const hostedLogoutUrl = "https://YOUR_COGNITO_DOMAIN/logout?client_id=YOUR_APP_CLIENT_ID&logout_uri=https://YOUR_APP_DOMAIN/logout-redirect.html";
+      window.location.href = hostedLogoutUrl;
+    }
+    logout();
+  </script>
+</body>
+</html>

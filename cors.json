@@ -1,0 +1,19 @@
+[
+    {
+        "AllowedHeaders": [
+            "*"
+        ],
+        "AllowedMethods": [
+            "GET",
+            "PUT",
+            "POST",
+            "HEAD"
+        ],
+        "AllowedOrigins": [
+            "https://YOUR_AMPLIFY_DOMAIN"      #Amplify app domain name
+        ],
+        "ExposeHeaders": [
+            "ETag"
+        ]
+    }
+]

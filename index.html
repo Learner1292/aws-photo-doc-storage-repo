@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Photo & Document Storage Demo</title>
+  <style>
+    body { font-family: Arial; margin: 40px; }
+    .button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; margin-right: 10px; }
+    #fileList img { max-width: 200px; margin: 10px; }
+  </style>
+</head>
+<body>
+
+<h1>Photo & Document Storage Demo</h1>
+
+<button class="button" id="loginBtn">Sign In / Sign Up</button>
+<button class="button" id="logoutBtn" style="display:none;">Sign Out</button>
+
+<hr>
+
+<h2>Upload File</h2>
+<input type="file" id="fileInput" style="display:none;">
+<button class="button" id="uploadBtn" style="display:none;">Upload</button>
+
+<h2>Uploaded Files</h2>
+<div id="fileList"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/aws-amplify@4.3.39/dist/aws-amplify.min.js"></script>
+<script>
+const { Auth, Storage, Amplify } = aws_amplify;
+
+// -------------------------
+// CONFIGURE AMPLIFY
+// -------------------------
+Amplify.configure({
+  Auth: {
+    region: "YOUR_COGNITO_REGION",            // e.g., "ap-south-1"
+    userPoolId: "YOUR_USER_POOL_ID",          // e.g., "ap-south-1_XXXXXXXXX"
+    userPoolWebClientId: "YOUR_APP_CLIENT_ID",// e.g., "xxxxxxxxxxxxxxxxxxxx"
+    identityPoolId: "YOUR_IDENTITY_POOL_ID",  // e.g., "ap-south-1:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    cookieStorage: {
+      domain: "YOUR_APP_DOMAIN",              // e.g., "demo.example.com"
+      path: "/",
+      expires: 1,
+      sameSite: "lax",
+      secure: true
+    },
+    oauth: {
+      domain: "YOUR_COGNITO_DOMAIN",         // e.g., "yourdomain.auth.ap-south-1.amazoncognito.com"
+      scope: ["openid","email","profile"],
+      redirectSignIn: "https://YOUR_APP_DOMAIN/",
+      redirectSignOut: "https://YOUR_APP_DOMAIN/logout.html",
+      responseType: "code"
+    }
+  },
+  Storage: {
+    AWSS3: {
+      bucket: "YOUR_S3_BUCKET_NAME",         // e.g., "demo-photo-doc-bucket"
+      region: "YOUR_COGNITO_REGION"
+    }
+  }
+});
+
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const fileInput = document.getElementById("fileInput");
+const uploadBtn = document.getElementById("uploadBtn");
+const fileList = document.getElementById("fileList");
+
+// LOGIN
+loginBtn.onclick = () => Auth.federatedSignIn();
+
+// LOGOUT
+logoutBtn.onclick = async () => {
+  try { await Auth.signOut({ global: true }); } catch {}
+  sessionStorage.clear();
+  localStorage.clear();
+  const hostedLogoutUrl = `https://YOUR_COGNITO_DOMAIN/logout?client_id=YOUR_APP_CLIENT_ID&logout_uri=https://YOUR_APP_DOMAIN/logout-redirect.html`;
+  window.location.href = hostedLogoutUrl;
+};
+
+// CHECK LOGIN STATE
+async function checkLoginState() {
+  try {
+    const user = await Auth.currentAuthenticatedUser({ bypassCache: true });
+    loginBtn.style.display = "none";
+    logoutBtn.style.display = "inline-block";
+    fileInput.style.display = "block";
+    uploadBtn.style.display = "block";
+    loadFiles();
+  } catch {
+    loginBtn.style.display = "inline-block";
+    logoutBtn.style.display = "none";
+    fileInput.style.display = "none";
+    uploadBtn.style.display = "none";
+    fileList.innerHTML = "";
+  }
+}
+
+checkLoginState();
+
+// UPLOAD
+uploadBtn.onclick = async () => {
+  const file = fileInput.files[0];
+  if (!file) return alert("Select a file!");
+  try {
+    await Storage.put(file.name, file, { level: "private" });
+    alert("Upload successful!");
+    fileInput.value = "";
+    loadFiles();
+  } catch { alert("Upload failed"); }
+};
+
+// LIST FILES
+async function loadFiles() {
+  try {
+    const files = await Storage.list("", { level: "private" });
+    fileList.innerHTML = "";
+    for (const item of files) {
+      const url = await Storage.get(item.key, { level: "private" });
+      if (item.key.match(/\.(jpg|jpeg|png|gif)$/i)) {
+        fileList.innerHTML += `<img src="${url}" />`;
+      } else {
+        fileList.innerHTML += `<p><a href="${url}" target="_blank">${item.key}</a></p>`;
+      }
+    }
+  } catch { console.error("Error listing files"); }
+}
+</script>
+</body>
+</html>

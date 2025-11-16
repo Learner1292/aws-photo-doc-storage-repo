@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Logged Out</title>
+  <style>
+    body { font-family: Arial; text-align: center; margin-top: 100px; }
+    a.button {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    a.button:hover { background: #0056b3; }
+  </style>
+</head>
+<body>
+  <h1>You are logged out</h1>
+  <p>Click below to log in again.</p>
+  <a class="button" href="#" id="loginBtn">Sign In / Sign Up</a>
+
+  <script src="https://cdn.jsdelivr.net/npm/aws-amplify@4.3.39/dist/aws-amplify.min.js"></script>
+  <script>
+    const { Auth, Amplify } = aws_amplify;
+    Amplify.configure({
+      Auth: {
+        region: "YOUR_COGNITO_REGION",
+        userPoolId: "YOUR_USER_POOL_ID",
+        userPoolWebClientId: "YOUR_APP_CLIENT_ID",
+        identityPoolId: "YOUR_IDENTITY_POOL_ID",
+        oauth: {
+          domain: "YOUR_COGNITO_DOMAIN",
+          redirectSignIn: "https://YOUR_APP_DOMAIN/",
+          redirectSignOut: "https://YOUR_APP_DOMAIN/logout.html",
+          responseType: "code"
+        }
+      }
+    });
+
+    document.getElementById("loginBtn").onclick = () => Auth.federatedSignIn();
+  </script>
+</body>
+</html>
